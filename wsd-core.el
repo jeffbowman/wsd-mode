@@ -152,7 +152,11 @@
 
       ;; only copy to file when in a saved buffer
       (when file-name
-	(copy-file temp-name file-name t t t)))
+	(copy-file temp-name file-name t t t))
+
+      ;; invoke flycheck-integration when available
+      (when (boundp 'wsd-flycheck-params)
+	(apply 'wsd-flycheck-start wsd-flycheck-params)))
 
     (if (display-graphic-p)
 	(if (wsd-image-format-supported-p)

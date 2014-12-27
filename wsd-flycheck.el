@@ -25,42 +25,53 @@
 
 ;;; Code:
 
+;; tentatively load flycheck if installed.
+(ignore-errors
+  (require 'flycheck))
 
-(defun wsd-flycheck-parse-errors (checker wsd-errors)
-  (mapcar (lambda (wsd-error)
-	    (let* ((line     (car wsd-error))
-		   (message  (cdr wsd-error)))
-	      (flycheck-error-new-at line 1 'error message
-				     :checker checker
-				     :buffer (current-buffer)
-				     :filename (buffer-file-name))))
-	  wsd-errors))
+;; assign default-values.
+(defvar wsd-flycheck-params nil)
 
-(defun wsd-flycheck-start (checker callback)
-  "Start a wsd website invocation to get rendered results and errors.."
+;; only attempt load when flycheck is available.
+(when (fboundp 'flycheck-define-generic-checker)
 
-  ;; wsd-errors is set by wsd-mode's rendering functions to be picked up here.
+  (defun wsd-flycheck-parse-errors (checker wsd-errors)
+    (mapcar (lambda (wsd-error)
+              (let* ((line     (car wsd-error))
+                     (message  (cdr wsd-error)))
+                (flycheck-error-new-at line 1 'error message
+                                       :checker checker
+                                       :buffer (current-buffer)
+                                       :filename (buffer-file-name))))
+            wsd-errors))
 
-  (condition-case err
-      (let ((errors (wsd-flycheck-parse-errors checker wsd-errors)))
-        (funcall callback 'finished (delq nil errors)))
-    (error (funcall callback 'errored (error-message-string err))))
-  ;; the error callback
-  (lambda (msg) (funcall callback 'errored msg)))
+  (defun wsd-flycheck-start (checker callback)
+    "Start a wsd website invocation to get rendered results and errors.."
+
+    ;; for wsd-core.el on updates.
+    (setq-local wsd-flycheck-params (list checker callback))
+
+    (condition-case err
+        ;; wsd-errors is set by wsd-mode's rendering functions to be picked up here.
+        (let ((errors (wsd-flycheck-parse-errors checker wsd-errors)))
+          (funcall callback 'finished (delq nil errors)))
+      (error (funcall callback 'errored (error-message-string err))))
+    ;; the error callback
+    (lambda (msg) (funcall callback 'errored msg)))
 
 
-(flycheck-define-generic-checker 'wsd-mode-checker
-  "A syntax-checker for wsd-mode based on the errors reported from the
+  (flycheck-define-generic-checker 'wsd-mode-checker
+    "A syntax-checker for wsd-mode based on the errors reported from the
 wsd-mode website itself."
 
-  :modes 'wsd-mode
-  :start #'wsd-flycheck-start)
+    :modes 'wsd-mode
+    :start #'wsd-flycheck-start)
 
 ;;;###autoload
-(defun wsd-flycheck-setup ()
-  "Setup Flycheck for wsd-mode."
-  (interactive)
-  (add-to-list 'flycheck-checkers 'wsd-mode-checker))
+  (defun wsd-flycheck-setup ()
+    "Setup Flycheck for wsd-mode."
+    (interactive)
+    (add-to-list 'flycheck-checkers 'wsd-mode-checker)))
 
 (provide 'wsd-flycheck)
 ;;; wsd-flycheck.el ends here
