@@ -9,6 +9,8 @@
 (require 'wsd-core)
 (require 'wsd-mode)
 
+;;(require 'wsd-flycheck)
+
 ;; test-helpers
 
 (when (not (fboundp 'string-suffix-p))
@@ -52,14 +54,14 @@
 
 (ert-deftest indentation-rules-behaves-like-expected ()
   (dolist (test-run '((("alt") . 4)
-		      (("alt" "end") . 0)
-		      (("alt" "end" "alt") . 4)
-		      (("alt" "end" "end") . 0)
-		      (("alt" "end" "end" "alt") . 4)
-		      (("alt" "opt" "end" "opt") . 8)))
+                      (("alt" "end") . 0)
+                      (("alt" "end" "alt") . 4)
+                      (("alt" "end" "end") . 0)
+                      (("alt" "end" "end" "alt") . 4)
+                      (("alt" "opt" "end" "opt") . 8)))
     (let* ((test-data       (car test-run))
-	   (expected-result (cdr test-run))
-	   (actual-result   (wsd-get-indentation-from-keywords test-data)))
+           (expected-result (cdr test-run))
+           (actual-result   (wsd-get-indentation-from-keywords test-data)))
       (should
        (= expected-result actual-result)))))
 
@@ -77,6 +79,13 @@
 
     (should (= 20 (car first-error)))
     (should (equal "Deactivate: User was not activated." (cdr first-error)))))
+
+;; (ert-deftest flycheck-errors-are-returned ()
+;;   (let* ((result (wsd-flycheck-parse-errors
+;;                   'wsd-mode-checker
+;;                   '((33 . "Error: end without prior group.") (34 . "Error: end without prior group.")))))
+;;     (should (not (equal nil result)))))
+
 
 ;;(ert-run-tests-interactively t)
 
